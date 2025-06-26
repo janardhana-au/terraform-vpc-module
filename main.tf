@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
       Name = "${var.project}-${var.environment}"
     })
 } 
-# roboshop-dev
+# roboshop-dev-internet_gw
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 
@@ -22,8 +22,8 @@ resource "aws_internet_gateway" "gw" {
       Name = "${var.project}-${var.environment}"
     })
 } 
-#roboshop-dev-us-east-1a
-resource "aws_subnet" "public" {
+#roboshop-dev-public_subnet
+resource "aws_subnet" "public_subnet_ids" {
   count = length(var.public_subnet_cidrs)
   vpc_id     = aws_vpc.main.id
   cidr_block = var.public_subnet_cidrs[count.index]
@@ -38,8 +38,8 @@ resource "aws_subnet" "public" {
 }
 
 
-#roboshop-dev-us-east-1a
-resource "aws_subnet" "private" {
+#roboshop-dev-private-subnets
+resource "aws_subnet" "private_subnet_ids" {
   count = length(var.private_subnet_cidrs)
   vpc_id     = aws_vpc.main.id
   cidr_block = var.private_subnet_cidrs[count.index]
@@ -54,7 +54,7 @@ resource "aws_subnet" "private" {
     })
 }
 
-resource "aws_subnet" "database" {
+resource "aws_subnet" "database_subnet_ids" {
   count = length(var.database_subnet_cidrs)
   vpc_id     = aws_vpc.main.id
   cidr_block = var.database_subnet_cidrs[count.index]
@@ -83,7 +83,7 @@ resource "aws_eip" "nat" {
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
+  subnet_id     = aws_subnet.public_subnet_ids[0].id
 
   tags = merge(
     var.nat_tags,
@@ -151,22 +151,26 @@ resource "aws_route" "database" {
 
 resource "aws_route_table_association" "public" {
   count = length(var.public_subnet_cidrs)
-  subnet_id      = aws_subnet.public[count.index].id
+  subnet_id      = aws_subnet.public_subnet_ids[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
   count = length(var.private_subnet_cidrs)
-  subnet_id      = aws_subnet.private[count.index].id
+  subnet_id      = aws_subnet.private_subnet_ids[count.index].id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "database" {
   count = length(var.database_subnet_cidrs)
-  subnet_id      = aws_subnet.database[count.index].id
+  subnet_id      = aws_subnet.database_subnet_ids[count.index].id
   route_table_id = aws_route_table.database.id
 }
 
+
+# vpc peering section
+
+/* 
 resource "aws_vpc_peering_connection" "peering" {
   count = var.is_peering_req? 1:0
   peer_vpc_id   = data.aws_vpc.peering_vpc.id
@@ -227,7 +231,7 @@ resource "aws_route_table_association" "peering" {
 
   route_table_id = aws_route_table.peering_rt_peer_side.id
   subnet_id = data.aws_subnet.peer_subnet.id
-}
+} */
 
 
 
