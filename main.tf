@@ -79,9 +79,9 @@ resource "aws_eip" "nat" {
     {
       Name = "${var.project}-${var.environment}"
     })
-}
+} 
 
-resource "aws_nat_gateway" "nat" {
+ resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public_subnet_ids[0].id
 
